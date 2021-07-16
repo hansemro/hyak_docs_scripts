@@ -163,78 +163,8 @@ matlab &
 
 ## Running a graphical desktop environment via VNC
 
-The VNC method requires forwarding ports from the interactive node to the
-user's system. 
-
-### Windows (MobaXterm)
-
-In MobaXterm, start a local terminal and run the following.
-
-```
-$ ssh -L 59000:127.0.0.1:5901 <NETID>@klone.hyak.uw.edu
-[<NETID>@klone1 ~]$ salloc --x11 -p compute -A stf --nodes=1 --ntasks-per-node=4 --time=2:00:00 --mem=8G
-[<NETID>@klone1 ~]$ ssh -L 5901:127.0.0.1:5901 $SLURM_NODELIST
-```
-
-Obtain or build an XFCE singularity container. (Users can replace XFCE with
-another graphical environment by modifying the provided recipe.)
-
-```bash
-# inside an interactive node and not in a login node 
-git clone git@bitbucket.org:psy_lab/xfce_singularity.git
-cd xfce_singularity
-
-# build xfce.sif container
-make
-
-# copy xstartup to ~/.vnc/xstartup
-mkdir -p ~/.vnc
-cp xstartup ~/.vnc/xstartup
-chmod +x ~/.vnc/xstartup
-```
-
-Enter `xfce.sif` container and run the following:
-
-```bash
-singularity shell xfce.sif
-
-# set vnc password
-vncpasswd
-
-# start vncserver
-vncserver &
-```
-
-In MobaXterm, connect to the VNC session forwarded to `localhost:59000`.
-
-Since the XFCE container contains a limited number of applications, you can ssh
-into the interactive node with X11 Forwarding to run additional applications
-(including ones from `modules avail` and other singularity containers). To load
-Matlab, for example, open a terminal window in the VNC session and run the
-following:
-
-```bash
-ssh -Y $(hostname)
-
-# run the command below if you want the GUI applications drawn inside the VNC
-# client.
-export DISPLAY=:1
-
-module load matlab
-matlab &
-```
-
-### Windows (TightVNC Viewer)
-
-TODO
-
-### macOS
-
-TODO
-
-### Linux
-
-Connect to a Hyak interactive node with port forwarding.
+Connect to a Hyak interactive node with port forwarding. (Local port 59000 is
+chosen arbitrarily).
 
 ```
 ssh -L 59000:127.0.0.1:5901 <NETID>@klone.hyak.uw.edu
@@ -271,9 +201,22 @@ vncpasswd
 vncserver &
 ```
 
-With a VNC client (such as vinagre), connect to the VNC session at `localhost:59000`.
+With a VNC client, connect to the VNC session at `localhost:59000`.
 
-### Cleanup Routine
+Example: Matlab GUI
+
+```bash
+ssh -Y $(hostname)
+
+# run the command below if you want the GUI applications drawn inside the VNC
+# client.
+export DISPLAY=:1
+
+module load matlab
+matlab &
+```
+
+### VNC Cleanup Routine
 
 1. Kill VNC session:
 
