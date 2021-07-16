@@ -196,6 +196,8 @@ chmod +x ~/.vnc/xstartup
 Enter `xfce.sif` container and run the following:
 
 ```bash
+singularity shell xfce.sif
+
 # set vnc password
 vncpasswd
 
@@ -260,6 +262,8 @@ chmod +x ~/.vnc/xstartup
 Enter `xfce.sif` container and run the following:
 
 ```bash
+singularity shell xfce.sif
+
 # set vnc password
 vncpasswd
 
