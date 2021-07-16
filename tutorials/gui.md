@@ -27,11 +27,11 @@ SSH, X11, and VNC capabilities in one package.
 These are just my personal recommendations.
 
 - [OpenSSH Client for Windows](https://docs.microsoft.com/en-us/windows-server/administration/openssh/openssh_install_firstuse)
-  - Create `/dev/tty` to fix known [issue](https://github.com/PowerShell/Win32-OpenSSH/issues/1088) by running the following in an admin powershell: `mkdir /dev && echo x > /dev/tty`
-  - Set DISPLAY environment variable to `localhost:0.0`
+    - Create `/dev/tty` to fix known [issue](https://github.com/PowerShell/Win32-OpenSSH/issues/1088) by running the following in an admin powershell: `mkdir /dev && echo x > /dev/tty`
+    - Set DISPLAY environment variable to `localhost:0.0`
 - [VcXsrv](https://sourceforge.net/projects/vcxsrv/files/vcxsrv/)
 - [TightVNC (non-Java version)](https://www.tightvnc.com/)
-  - Install VNC Viewer
+    - Install VNC Viewer
 - [(Optional) Windows Terminal](https://www.microsoft.com/en-us/p/windows-terminal/9n0dx20hk701)
 
 ### macOS
