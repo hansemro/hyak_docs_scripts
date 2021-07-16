@@ -74,7 +74,7 @@ Under `Advanced SSH Settings`, ensure the X11-Forwarding is checked.
 
 Press OK and login.
 
-Test X11-Forwarding by running `xeyes` in the login node and an interactive
+Test X11 forwarding by running `xeyes` in the login node and an interactive
 node:
 
 ```
@@ -96,7 +96,26 @@ TODO
 
 ### Linux
 
-TODO
+Connect to Hyak with X11 forwarding.
+
+```
+ssh -Y <NETID>@klone.hyak.uw.edu
+```
+
+Connect to an interactive node.
+
+```
+srun --x11 -p compute -A stf --nodes=1 --ntasks-per-node=4 --time=2:00:00 --mem=8G --pty /bin/bash
+```
+
+Test X11 forwarding with `xeyes`.
+
+Example: Matlab GUI
+
+```
+module load matlab
+matlab &
+```
 
 ## Running a graphical desktop environment via X11 Forwarding (Windows/macOS)
 
