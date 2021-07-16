@@ -44,15 +44,16 @@ install [XQuartz](https://www.xquartz.org/).
 Debian/Ubuntu:
 
 ```
-sudo apt-get install vinagre openssh-client xinit xterm
+sudo apt-get install vinagre openssh-client xinit xterm xnest
 ```
 
 RHEL8/CentOS8:
 
 ```
-sudo yum install xterm openssh-clients \
+sudo yum install vinagre xterm openssh-clients \
         xorg-x11-{server-Xorg,server-utils,xinit-session} \
-        xorg-x11-{utils,xauth,drivers,xbitmaps,xkb-utils}
+        xorg-x11-{utils,xauth,drivers,xbitmaps,xkb-utils} \
+        xorg-x11-server-Xnest
 ```
 
 ## Running a GUI App via X11 Forwarding
@@ -117,9 +118,18 @@ module load matlab
 matlab &
 ```
 
-## Running a graphical desktop environment via X11 Forwarding (Windows/macOS)
+## Running a graphical desktop environment via X11 Forwarding
 
-First finish a guide to run a GUI app via X11 Forwarding.
+(Windows and macOS users can skip this step.) Linux users will need to take an
+additional step to prepare a nested X server window. On the local machine, run
+the following:
+
+```
+Xnest :2 &
+export DISPLAY=:2
+```
+
+Proceed with a guide to run a GUI app via X11 Forwarding above.
 
 Obtain or build an XFCE singularity container. (Users can replace XFCE with
 another graphical environment by modifying the provided recipe.)
@@ -141,6 +151,16 @@ Singularity> unset DBUS_SESSION_BUS_ADDRESS
 Singularity> startxfce4 &
 ```
 
+Example: Matlab GUI
+
+Create a terminal window in the XFCE session and run the following:
+
+```
+ssh -Y $(hostname)
+module load matlab
+matlab &
+```
+
 ## Running a graphical desktop environment via VNC
 
 The VNC method requires forwarding ports from the interactive node to the
@@ -153,13 +173,7 @@ In MobaXterm, start a local terminal and run the following.
 ```
 $ ssh -L 59000:127.0.0.1:5901 <NETID>@klone.hyak.uw.edu
 [<NETID>@klone1 ~]$ salloc --x11 -p compute -A stf --nodes=1 --ntasks-per-node=4 --time=2:00:00 --mem=8G
-# Output:
-#  salloc: Granted job allocation NNNNN...N
-#  salloc: Waiting for resource configuration
-#  salloc: Nodes nXXXX are ready for job
-
-# Replace nXXXX with hostname of the allocated interactive node.
-[<NETID>@klone1 ~]$ ssh -L 5901:127.0.0.1:5901 nXXXX
+[<NETID>@klone1 ~]$ ssh -L 5901:127.0.0.1:5901 $SLURM_NODELIST
 ```
 
 Obtain or build an XFCE singularity container. (Users can replace XFCE with
@@ -218,7 +232,42 @@ TODO
 
 ### Linux
 
-TODO
+Connect to a Hyak interactive node with port forwarding.
+
+```
+ssh -L 59000:127.0.0.1:5901 <NETID>@klone.hyak.uw.edu
+[<NETID>@klone1 ~]$ salloc --x11 -p compute -A stf --nodes=1 --ntasks-per-node=4 --time=2:00:00 --mem=8G
+[<NETID>@klone1 ~]$ ssh -L 5901:127.0.0.1:5901 $SLURM_NODELIST
+```
+
+Obtain or build an XFCE singularity container. (Users can replace XFCE with
+another graphical environment by modifying the provided recipe.)
+
+```bash
+# inside an interactive node and not in a login node 
+git clone git@bitbucket.org:psy_lab/xfce_singularity.git
+cd xfce_singularity
+
+# build xfce.sif container
+make
+
+# copy xstartup to ~/.vnc/xstartup
+mkdir -p ~/.vnc
+cp xstartup ~/.vnc/xstartup
+chmod +x ~/.vnc/xstartup
+```
+
+Enter `xfce.sif` container and run the following:
+
+```bash
+# set vnc password
+vncpasswd
+
+# start vncserver
+vncserver &
+```
+
+With a VNC client (such as vinagre), connect to the VNC session at `localhost:59000`.
 
 ### Cleanup Routine
 
