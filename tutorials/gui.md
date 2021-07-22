@@ -168,7 +168,7 @@ chosen arbitrarily).
 
 ```
 ssh -L 59000:127.0.0.1:5901 <NETID>@klone.hyak.uw.edu
-[<NETID>@klone1 ~]$ salloc --x11 -p compute -A stf --nodes=1 --ntasks-per-node=4 --time=2:00:00 --mem=8G
+[<NETID>@klone1 ~]$ salloc -p compute -A stf --nodes=1 --ntasks-per-node=4 --time=2:00:00 --mem=8G
 [<NETID>@klone1 ~]$ ssh -L 5901:127.0.0.1:5901 $SLURM_NODELIST
 ```
 
@@ -263,11 +263,11 @@ matlab &
 2. Exit interactive node (and give up node access manually if using salloc to access node)
 
 ```
-[<NETID>@nXXXX PATH]: exit
+[<NETID>@nXXXX PATH]$ exit
 
 # run if exiting the node does not deallocate the node. 
 # run "squeue | grep $USER" to check for active work sessions.
-[<NETID>@klone1 PATH]: scancel $SLURM_JOB_ID
+[<NETID>@klone1 PATH]$ scancel $SLURM_JOB_ID
 ```
 
 3. Exit login node to stop the port forward.
