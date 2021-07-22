@@ -203,7 +203,45 @@ vncserver &
 
 With a VNC client, connect to the VNC session at `localhost:59000`.
 
-Example: Matlab GUI
+### Windows (MobaXterm) Steps
+
+In MobaXterm, create a new (VNC) session.
+
+Set remote hostname to `localhost` and the port to `59000`.
+
+![MobaXterm - VNC session settings](pics/win/vnc/vnc_connect_pt1.png)
+
+Enter VNC password.
+
+![MobaXterm - VNC password](pics/win/vnc/vnc_connect_pt2.png)
+
+If port forwarding is properly configured, then a graphical
+desktop environment should appear.
+
+![MobaXterm - VNC XFCE4](pics/win/vnc/vnc_connect_pt3.png)
+
+### macOS Steps
+
+Go to `Finder` -> `Go` -> `Connect to Server`.
+
+![macOS - Finder](pics/mac/vnc/vnc_connect_pt1.png)
+
+Connect to `vnc://localhost:59000`.
+
+![macOS - VNC server address](pics/mac/vnc/vnc_connect_pt2.png)
+
+Enter VNC password.
+
+![macOS - VNC password](pics/mac/vnc/vnc_connect_pt3.png)
+
+If port forwarding is properly configured, then a graphical
+desktop environment should appear.
+
+![macOS - VNC XFCE4](pics/mac/vnc/vnc_connect_pt4.png)
+
+### Example: Matlab GUI in VNC client
+
+Open a terminal window and run the following:
 
 ```bash
 ssh -Y $(hostname)
