@@ -7,6 +7,21 @@ This tutorial will cover steps to run GUI applications via X11 forwarding, a
 graphical desktop environment (via X11 forwarding or VNC), and basic
 troubleshooting steps.
 
+Follow this tutorial by fulfilling the requirements in [Setup](# Setup) and
+selecting one of the three methods of reaching a graphial user interface:
+
+1. Running GUI applications with X11-Forwarding (w/o desktop environment).
+
+2. Running desktop environment with X11-Forwarding.
+
+3. (Advanced) Running desktop environment with VNC.
+
+4. (Recommended) Running desktop environment with VNC using scripts.
+
+The last (VNC) method can survive disconnects from the server since the X
+server is running on Hyak. Because of this and that VNC method achieves lower
+latency, VNC method is preferred for general use.
+
 ## Setup
 
 In general, users will need the following:
@@ -271,6 +286,41 @@ matlab &
 ```
 
 3. Exit login node to stop the port forward.
+
+### Start/Stop VNC Session with Scripts
+
+Notes:
+
+- Adjust the scripts to point to an XFCE container.
+- VNC password must be set prior to running `startvnc.sh`.
+
+1. Connect to Klone login node with port forwarding:
+
+```
+ssh -L 59000:127.0.0.1:5901 <NETID>@klone.hyak.uw.edu
+```
+
+2. Copy start and stop scripts from this repo to your home directory:
+
+```
+cp /path/to/hyak_docs/scripts/* ~/
+chmod +x ~/startvnc.sh
+chmod +x ~/stopvnc.sh
+```
+
+3. Start VNC session by running the following:
+
+```
+./startvnc.sh
+```
+
+4. Connect to VNC session running at `localhost:59000`.
+
+5. To stop the VNC session, kill the VNC server by running the following:
+
+```
+./stopvnc.sh
+```
 
 ## Troubleshooting
 
