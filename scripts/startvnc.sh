@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Maintained by Hansem Ro <hansemro@outlook.com>
 
-# Version: 0.1
+# Version: 0.2
 
 # startvnc.sh: Starts a VNC session with XFCE from Klone login node.
 #
@@ -16,6 +16,9 @@
 #
 # To stop a vnc session, run the companion script stopvnc.sh in a login node.
 
+XFCE_CONTAINER_FILEPATH=/gscratch/ece/xfce_singularity/xfce.sif
+CMD_STARTVNC="singularity exec $XFCE_CONTAINER_FILEPATH \
+    vncserver -depth 24 -geometry 1920x1080 &"
 
 # quit immediately if a process fails
 set -e
@@ -23,7 +26,8 @@ set -e
 # quit if vnc password is not set
 if ! [ -f "$HOME"/.vnc/passwd ]; then
     echo "Error: VNC password is not set"
-    echo ""
+    echo "To set vnc password, run the following:"
+    echo "singularity exec $XFCE_CONTAINER_FILEPATH vncpasswd"
     exit 1
 fi
 
@@ -33,10 +37,6 @@ if [ $VNC_JOBID ] || [ -f .tmp_jobid ] || [ -f .tmp_node ]; then
     echo "Error: VNC server already running"
     exit 1
 fi
-
-XFCE_CONTAINER_FILEPATH="$HOME"/xfce_singularity/xfce.sif
-CMD_STARTVNC="singularity exec $XFCE_CONTAINER_FILEPATH \
-    vncserver -depth 24 -geometry 1920x1080 &"
 
 # allocate compute node for running vnc server (for 3 hours)
 salloc -J vnc --no-shell -p compute -A stf --nodes=1 \
@@ -52,6 +52,13 @@ echo "$NODE" > "$HOME"/.tmp_node
 
 # TODO set vnc password if ~/.vnc/passwd does not exist
 
-# start vncserver and forward port 5901
-ssh "$NODE" "$CMD_STARTVNC"
-ssh -N -f -L 5901:127.0.0.1:5901 "$NODE" &
+# start vncserver and forward vnc port
+VNC_PORT=5900
+TMP=$(ssh "$NODE" "$CMD_STARTVNC")
+OFFSET=$(echo $TMP | sed -E "s/(New\s)('[^']+'\sdesktop\sat\s):([^\s]+)/\3/" | awk '{print $1}')
+((VNC_PORT=VNC_PORT + OFFSET))
+echo "VNC server port: $VNC_PORT"
+ssh -N -f -L "$VNC_PORT":127.0.0.1:"$VNC_PORT" "$NODE" &
+echo "Create a port between your system and Hyak by running the following"\
+    "on a local terminal session (leave running in background):"
+echo "ssh -N -f -L 59000:127.0.0.1:$VNC_PORT $USER@klone.hyak.uw.edu"
