@@ -77,6 +77,13 @@ chmod 600 ~/.ssh/authorized_keys
 
 This essentially skips password authentication when connecting between nodes.
 
+### .bashrc Additions for Singularity
+
+```
+export PATH=/opt/ohpc/pub/libs/singularity/3.7.1/bin:$PATH
+export SINGULARITY_BINDPATH="/tmp:/tmp,$HOME,$PWD,/mmfs1,/gscratch,/opt:/opt,/:/hyak_root"
+```
+
 ## Tutorials
 
 The `./tutorials/` directory provides some Hyak-related tutorials.
