@@ -71,7 +71,7 @@ sudo yum install vinagre xterm openssh-clients \
         xorg-x11-server-Xnest
 ```
 
-## Running a GUI App via X11 Forwarding
+## (Option 1) Running a GUI App via X11 Forwarding
 
 Steps for all OS variants are similar. The general procedure goes as follows:
 
@@ -133,7 +133,7 @@ module load matlab
 matlab &
 ```
 
-## Running a graphical desktop environment via X11 Forwarding
+## (Option 2) Running a graphical desktop environment via X11 Forwarding
 
 (Windows and macOS users can skip this step.) Linux users will need to take an
 additional step to prepare a nested X server window. On the local machine, run
@@ -176,7 +176,7 @@ module load matlab
 matlab &
 ```
 
-## Running a graphical desktop environment via VNC
+## (Option 3) Running a graphical desktop environment via VNC
 
 Connect to a Hyak interactive node with port forwarding. (Local port 59000 is
 chosen arbitrarily).
