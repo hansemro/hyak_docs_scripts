@@ -14,9 +14,7 @@ selecting one of the three methods of reaching a graphial user interface:
 
 2. Running desktop environment with X11-Forwarding.
 
-3. (Advanced) Running desktop environment with VNC.
-
-4. (Recommended) Running desktop environment with VNC using scripts.
+3. Running desktop environment with VNC.
 
 The last (VNC) method can survive disconnects from the server since the X
 server is running on Hyak. Because of this and that VNC method achieves lower
@@ -58,13 +56,13 @@ install [XQuartz](https://www.xquartz.org/).
 
 Debian/Ubuntu:
 
-```
+```bash
 sudo apt-get install vinagre openssh-client xinit xterm xnest
 ```
 
 RHEL8/CentOS8:
 
-```
+```bash
 sudo yum install vinagre xterm openssh-clients \
         xorg-x11-{server-Xorg,server-utils,xinit-session} \
         xorg-x11-{utils,xauth,drivers,xbitmaps,xkb-utils} \
@@ -94,11 +92,11 @@ Test X11 forwarding by running `xeyes` in the login node and an interactive
 node:
 
 ```
-[<NETID>@klone1 ~]$ xeyes
+[<NETID>@klone]$ xeyes
 ...
-[<NETID>@klone1 ~]$ srun --x11 -p compute -A stf --nodes=1 --ntasks-per-node=4 --time=2:00:00 --mem=8G --pty /bin/bash
+[<NETID>@klone]$ srun --x11 -p <partition> -A <account> -c 16 --time=2:00:00 --mem=8G --pty /bin/bash
 ...
-[<NETID>@nXXXX ~]$ xeyes
+[<NETID>@<node_name>]$ xeyes
 ...
 ```
 
@@ -121,7 +119,7 @@ ssh -Y <NETID>@klone.hyak.uw.edu
 Connect to an interactive node.
 
 ```
-srun --x11 -p compute -A stf --nodes=1 --ntasks-per-node=4 --time=2:00:00 --mem=8G --pty /bin/bash
+srun --x11 -p <partition> -A <account> -c 16 --time=2:00:00 --mem=8G --pty /bin/bash
 ```
 
 Test X11 forwarding with `xeyes`.
@@ -170,7 +168,7 @@ Example: Matlab GUI
 
 Create a terminal window in the XFCE session and run the following:
 
-```
+```bash
 ssh -Y $(hostname)
 module load matlab
 matlab &
@@ -178,149 +176,162 @@ matlab &
 
 ## (Option 3) Running a graphical desktop environment via VNC
 
-Connect to a Hyak interactive node with port forwarding. (Local port 59000 is
-chosen arbitrarily).
+### (Recommended) Setup VNC with hyakvnc.py utility
+
+Run hyakvnc.py with `-h` to see all available options.
+
+#### Starting VNC session
+
+Connect to Hyak login node.
 
 ```
-ssh -L 59000:127.0.0.1:5901 <NETID>@klone.hyak.uw.edu
-[<NETID>@klone1 ~]$ salloc -p compute -A stf --nodes=1 --ntasks-per-node=4 --time=2:00:00 --mem=8G
-[<NETID>@klone1 ~]$ ssh -L 5901:127.0.0.1:5901 $SLURM_NODELIST
+$ ssh <NETID>@klone.hyak.uw.edu
+```
+
+To create VNC session on an interactive node with 16 cores, 16G RAM, and
+allocated for 3 hours, run the following:
+
+```
+[<NETID>@klone]$ ./hyakvnc.py -c 16 --mem 16G -t 3
+```
+
+If not done already, this utility may ask the user to prepare for SSH
+intracluster access and VNC password. Both are required for this utility.
+
+If the utility succeeded, it should output additional instructions to set up
+a single port forward from the user machine to Hyak login node.
+
+Example:
+```
+...
+Successfully created port forward
+=====================
+Run the following in a new terminal window:
+        ssh -N -f -L 5900:127.0.0.1:5900 hansem7@klone.hyak.uw.edu
+then connect to VNC session at localhost:5900
+=====================
+```
+
+Run the instructed ssh port forward command in a new terminal session (on
+the user machine).
+
+Lastly, connect to VNC session at the instructed address (on user machine with VNC
+client).
+
+#### Stopping VNC session
+
+To stop VNC session and its associated job, run hyakvnc.py with `--kill-all`
+option.
+
+```
+[<NETID>@klone]$ ./hyakvnc.py --kill-all
+```
+
+### (Advanced) Manual setup
+
+Because of a presence of firewall, a user needs to make 2 port forwards to
+establish VNC connection:
+
+1. port forward between login node and interactive node,
+
+2. and port forward between user machine and login node.
+
+The second port forward (and subsequently, the first) will require the user to
+find a port that is unused by another user/process.
+
+Running `netstat -ant | grep LISTEN | grep <PORT>` with some port number can be
+used to determine if a port is used. If netstat shows nothing for the given
+port, the user may use that port.
+
+#### Starting VNC session
+
+Connect to Hyak login node.
+
+```
+$ ssh <NETID>@klone.hyak.uw.edu
 ```
 
 Obtain or build an XFCE singularity container. (Users can replace XFCE with
 another graphical environment by modifying the provided recipe.)
 
 ```bash
-# inside an interactive node and not in a login node 
+# inside an interactive node and not in a login node
 git clone git@bitbucket.org:psy_lab/xfce_singularity.git
 cd xfce_singularity
 
 # build xfce.sif container
 make
-
-# copy xstartup to ~/.vnc/xstartup
-mkdir -p ~/.vnc
-cp xstartup ~/.vnc/xstartup
-chmod +x ~/.vnc/xstartup
 ```
 
-Enter `xfce.sif` container and run the following:
-
-```bash
-singularity shell xfce.sif
-
-# set vnc password
-vncpasswd
-
-# start vncserver
-vncserver &
-```
-
-With a VNC client, connect to the VNC session at `localhost:59000`.
-
-### Windows (MobaXterm) Steps
-
-In MobaXterm, create a new (VNC) session.
-
-Set remote hostname to `localhost` and the port to `59000`.
-
-![MobaXterm - VNC session settings](pics/win/vnc/vnc_connect_pt1.png)
-
-Enter VNC password.
-
-![MobaXterm - VNC password](pics/win/vnc/vnc_connect_pt2.png)
-
-If port forwarding is properly configured, then a graphical
-desktop environment should appear.
-
-![MobaXterm - VNC XFCE4](pics/win/vnc/vnc_connect_pt3.png)
-
-### macOS Steps
-
-Go to `Finder` -> `Go` -> `Connect to Server`.
-
-![macOS - Finder](pics/mac/vnc/vnc_connect_pt1.png)
-
-Connect to `vnc://localhost:59000`.
-
-![macOS - VNC server address](pics/mac/vnc/vnc_connect_pt2.png)
-
-Enter VNC password.
-
-![macOS - VNC password](pics/mac/vnc/vnc_connect_pt3.png)
-
-If port forwarding is properly configured, then a graphical
-desktop environment should appear.
-
-![macOS - VNC XFCE4](pics/mac/vnc/vnc_connect_pt4.png)
-
-### Example: Matlab GUI in VNC client
-
-Open a terminal window and run the following:
-
-```bash
-ssh -Y $(hostname)
-
-# run the command below if you want the GUI applications drawn inside the VNC
-# client.
-export DISPLAY=:1
-
-module load matlab
-matlab &
-```
-
-### VNC Cleanup Routine
-
-1. Kill VNC session:
-
-`vncserver -kill :1`
-
-2. Exit interactive node (and give up node access manually if using salloc to access node)
+Allocate node with `salloc` and start vnc session inside the singularity
+container.
 
 ```
-[<NETID>@nXXXX PATH]$ exit
-
-# run if exiting the node does not deallocate the node. 
-# run "squeue | grep $USER" to check for active work sessions.
-[<NETID>@klone1 PATH]$ scancel $SLURM_JOB_ID
+[<NETID>@klone]$ salloc --no-shell -p <partition> -A <account> --time 2:00:00 --mem=8G -c 16
+[<NETID>@klone]$ ssh <node_name|node_hostname|$(squeue | grep $USER | awk '{print $8}')>
+[<NETID>@<node_name>]$ singularity shell ./xfce.sif
+Singularity> vncserver -xstartup ./xstartup -baseHttpPort 5900
+...
+New '<node_hostname>:<vnc_display_number> (<NETID>)' desktop at :<vnc_display_number> on machine <node_hostname>
+...
+Singularity> exit
+[<NETID>@<node_name>]$ exit
 ```
 
-3. Exit login node to stop the port forward.
+Get the VNC display number and add 5900 (base VNC port) to it (e.g. if VNC
+display number is :1, then VNC port is at 5901). Now, we need to map this VNC
+port to an unused port on the login node.
 
-### Start/Stop VNC Session with Scripts
-
-Notes:
-
-- Adjust the scripts to point to an XFCE container.
-- VNC password must be set prior to running `startvnc.sh`.
-
-1. Connect to Klone login node with port forwarding:
+Find unused port starting at base VNC port 5900.
 
 ```
-ssh -L 59000:127.0.0.1:5901 <NETID>@klone.hyak.uw.edu
+[<NETID>@klone]$ netstat -ant | grep LISTEN | grep 5900
+tcp        0      0 127.0.0.1:5900          0.0.0.0:*               LISTEN
+tcp6       0      0 ::1:5900                :::*                    LISTEN
+[<NETID>@klone]$ netstat -ant | grep LISTEN | grep 5901
+tcp        0      0 127.0.0.1:5901          0.0.0.0:*               LISTEN
+tcp6       0      0 ::1:5901                :::*                    LISTEN
+[<NETID>@klone]$ netstat -ant | grep LISTEN | grep 5902
+[<NETID>@klone]$
 ```
 
-2. Copy start and stop scripts from this repo to your home directory:
+Since netstat with port 5902 shows nothing, we can use this for the second port
+forward.
 
 ```
-cp /path/to/hyak_docs/scripts/* ~/
-chmod +x ~/startvnc.sh
-chmod +x ~/stopvnc.sh
+[<NETID>@klone]$ ssh -N -f -L 5902:127.0.0.1:<VNC display number + base port> <node_name>
 ```
 
-3. Start VNC session by running the following:
+In a new terminal window (on the user machine), create the second port forward with
+the port checked with netstat.
 
 ```
-./startvnc.sh
+$ ssh -N -f -L 5902:127.0.0.1:5902 <NETID>@klone.hyak.uw.edu
 ```
 
-4. Connect to VNC session running at `localhost:59000`.
+Now connect to VNC session on user machine at localhost:5902.
 
-5. To stop the VNC session, kill the VNC server by running the following:
+#### Stopping VNC session
+
+Kill VNC server running on interactive node.
 
 ```
-./stopvnc.sh
+[<NETID>@klone]$ ssh <node_name|node_hostname|$(squeue | grep $USER | awk '{print $8}')>
+[<NETID>@<node_name>] singularity shell xfce.sif
+Singularity> vncserver -kill :*
+Singularity> exit
+[<NETID>@<node_name>] exit
 ```
+
+Cancel VNC job.
+
+```
+[<NETID>@klone]$ scancel <job_id>
+```
+
+Lastly, kill port forward between user machine and Hyak.
+
+TODO: Find command to complete this last step.
 
 ## Troubleshooting
 
@@ -333,3 +344,7 @@ This error can appear for several reasons:
 2. DISPLAY environment variable is not set or is set incorrectly.
 
 3. X11-forwarding is not enabled.
+
+### Port forward failure: `bind: Address already in use`
+
+This error occurs if the remote port is already used.
