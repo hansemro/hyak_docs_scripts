@@ -226,7 +226,7 @@ class SubNode(Node):
         Returns True if VNC session was started successfully and False otherwise
         """
         # for loop is to keep srun task alive and therefore keep the vnc session running until session eventually ends.
-        vnc_cmd = f"{self.cmd_prefix} bash -c \"vncserver -xstartup {XSTARTUP_FILEPATH} -baseHttpPort {BASE_VNC_PORT} -depth 24 && for (( ; ; )); do sleep 5; done\""
+        vnc_cmd = f"{self.cmd_prefix} bash -c \"vncserver -xstartup {XSTARTUP_FILEPATH} && for (( ; ; )); do sleep 5; done\""
         proc = self.run_command(vnc_cmd, "srun")
 
         # get display number and port number
@@ -236,9 +236,10 @@ class SubNode(Node):
             if line is not None:
                 if self.debug:
                     logging.debug(f"start_vnc: {line}")
-                if "desktop at :" in line:
+                if "desktop" in line:
                     # match against the following pattern:
                     #New 'n3000.hyak.local:1 (hansem7)' desktop at :1 on machine n3000.hyak.local
+                    #New 'n3000.hyak.local:6 (hansem7)' desktop is n3000.hyak.local:6
                     pattern = re.compile("""
                             (New\s)
                             (\'([^:]+:(?P<display_number>[0-9]+))\s([^\s]+)\s)
