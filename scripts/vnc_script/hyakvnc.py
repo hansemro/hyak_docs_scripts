@@ -90,6 +90,7 @@ import logging # for debug logging
 import time # for sleep
 import signal
 import os
+import shlex # used with subprocess
 import subprocess # for running shell commands
 import re # for regex
 
@@ -146,21 +147,25 @@ class SubNode(Node):
             if self.debug:
                 logging.debug(msg)
 
-    def run_command(self, command:str, timeout=None):
+    def run_command(self, command:str, method="srun"):
         """
         Run command (with arguments) on subnode
 
         Args:
           command:str : command and its arguments to run on subnode
-          timeout : [Default: None] timeout length in seconds
+          method:str : Run command using "ssh" or "srun" method. If srun task is
+                       still running, then the next srun command will hang
+                       until the previous task is completed. If this is the
+                       case, use ssh method.
 
-        Returns ssh subprocess with stderr->stdout and stdout->PIPE
+        Returns subprocess with stderr->stdout and stdout->PIPE
         """
         assert self.name is not None
-        cmd = ["ssh", self.hostname, command]
-        if timeout is not None:
-            cmd.insert(0, "timeout")
-            cmd.insert(1, str(timeout))
+        if method == "ssh":
+            cmd = f"ssh {self.hostname} {command}"
+        else:
+            cmd = f"srun -k --jobid={self.job_id} {command}"
+        cmd = shlex.split(cmd)
         if self.debug:
             msg = f"Running on {self.name}: {cmd}"
             print(msg)
@@ -199,7 +204,7 @@ class SubNode(Node):
         assert(self.job_id is not None)
         pid = self.get_vnc_pid(self.hostname, self.vnc_display_number)
         cmd = f"ps -U {os.getlogin()}"
-        proc = self.run_command(cmd)
+        proc = self.run_command(cmd, "ssh")
         while proc.poll() is None:
             line = str(proc.stdout.readline(), "utf-8").strip()
             if str(pid) in line:
@@ -215,9 +220,9 @@ class SubNode(Node):
 
         Returns True if VNC session was started successfully and False otherwise
         """
-        timer = 15
-        vnc_cmd = f"{self.cmd_prefix} vncserver -xstartup {XSTARTUP_FILEPATH} -baseHttpPort {BASE_VNC_PORT} -depth 24 &"
-        proc = self.run_command(vnc_cmd, timeout=timer)
+        # for loop is to keep srun task alive and therefore keep the vnc session running until session eventually ends.
+        vnc_cmd = f"{self.cmd_prefix} bash -c \"vncserver -xstartup {XSTARTUP_FILEPATH} -baseHttpPort {BASE_VNC_PORT} -depth 24 && for (( ; ; )); do sleep 5; done\""
+        proc = self.run_command(vnc_cmd, "srun")
 
         # get display number and port number
         while proc.poll() is None:
