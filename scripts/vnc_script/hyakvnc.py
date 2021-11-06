@@ -126,7 +126,7 @@ XSTARTUP_FILEPATH = "/gscratch/ece/xfce_singularity/xstartup"
 AUTH_KEYS_FILEPATH = os.path.expanduser("~/.ssh/authorized_keys")
 SINGULARITY_BINDPATH = os.getenv("SINGULARITY_BINDPATH")
 if SINGULARITY_BINDPATH is None:
-    SINGULARITY_BINDPATH = "/tmp:/tmp,$HOME,$PWD,/gscratch,/opt:/opt,/:/hyak_root"
+    SINGULARITY_BINDPATH = "/tmp:/tmp,/gscratch,/opt:/opt,/:/hyak_root"
 
 class Node:
     def __init__(self, name, debug=False):
