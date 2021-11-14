@@ -33,7 +33,29 @@ Mox: `ssh <NETID>@mox.hyak.uw.edu`
 
 Klone: `ssh <NETID>@klone.hyak.uw.edu`
 
-Note: Two-factor authentication cannot be skipped via pubkey authentication.
+Note: While Duo two-factor authentication cannot be skipped via pubkey
+authentication, Mac and Linux users may use SSH multiplexing to reuse an
+autheticated connection and effectively bypass Duo for subsequent connections.
+
+### [Mac/Linux] Setting up SSH Multiplexing to Skip Repeated Duo Authentication
+
+Add the following to ~/.ssh/config on your system:
+```
+Host klone.hyak.uw.edu
+    Hostname %h
+    User <NETID>
+    ControlPath ~/.ssh/%r@%h:%p
+    ControlMaster auto
+    ControlPersist 10m
+
+Host n????
+    Hostname %h
+    User <NETID>
+    ProxyJump klone.hyak.uw.edu
+```
+
+With SSH-mux prepared, you may also use pubkey authentication in place of
+standard password authentication.
 
 ## Usage Guidance
 
