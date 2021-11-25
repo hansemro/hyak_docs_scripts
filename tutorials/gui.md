@@ -229,12 +229,12 @@ option.
 
 ### (Advanced) Manual setup
 
-Because of a presence of firewall, a user needs to make 2 port forwards to
+Because there is a network firewall, the user needs to make 2 port forwards to
 establish VNC connection:
 
-1. port forward between login node and interactive node,
+1. a port forward between login node and interactive node,
 
-2. and port forward between user machine and login node.
+2. and a port forward between user machine and login node.
 
 The second port forward (and subsequently, the first) will require the user to
 find a port that is unused by another user/process.
@@ -288,15 +288,18 @@ Find unused port starting at base VNC port 5900.
 [<NETID>@klone]$ netstat -ant | grep LISTEN | grep 5900
 tcp        0      0 127.0.0.1:5900          0.0.0.0:*               LISTEN
 tcp6       0      0 ::1:5900                :::*                    LISTEN
-[<NETID>@klone]$ netstat -ant | grep LISTEN | grep 5901
-tcp        0      0 127.0.0.1:5901          0.0.0.0:*               LISTEN
-tcp6       0      0 ::1:5901                :::*                    LISTEN
+[<NETID>@klone]$ ss -l | grep 5901
+tcp   LISTEN 0      128                                                                 127.0.0.1:5901                     0.0.0.0:*
+tcp   LISTEN 0      128                                                                     [::1]:5901                        [::]:*
+mptcp LISTEN 0      128                                                                 127.0.0.1:5901                     0.0.0.0:*
+mptcp LISTEN 0      128                                                                     [::1]:5901                        [::]:*
 [<NETID>@klone]$ netstat -ant | grep LISTEN | grep 5902
+[<NETID>@klone]$ ss -l | grep 5902
 [<NETID>@klone]$
 ```
 
-Since netstat with port 5902 shows nothing, we can use this for the second port
-forward.
+Since netstat/ss with port 5902 shows nothing, we can use this for the second
+port forward.
 
 ```
 [<NETID>@klone]$ ssh -N -f -L 5902:127.0.0.1:<VNC display number + base port> <node_name>
