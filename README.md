@@ -1,8 +1,8 @@
 HYAK Docs and Tutorials
 =======================
 
-This repository contains documentation and tutorials regarding HYAK and its
-usage.
+This repository contains scripts, documentation, and tutorials regarding HYAK
+and its usage.
 
 ## About HYAK
 
@@ -64,15 +64,15 @@ here, you can manage other nodes with slurm commands and run programs.
 
 In general, login nodes should not be used for computational tasks or GUI
 programs. Login nodes serve as an interface to Hyak compute nodes and should
-be used for the following situations:
+be used for the following tasks:
 
 - file transfers between Hyak and external source (another computer, internet)
 - text editing
 - slurm management
 - light programs
 
-For heavy workloads or GUI programs or containerized programs, a compute node
-should be used instead.
+Use a Slurm-allocated compute node for heavier workloads such as GUI programs
+or containerized programs.
 
 ## Storage Guidance
 
@@ -104,6 +104,43 @@ This essentially skips password authentication when connecting between nodes.
 ```
 export PATH=/opt/ohpc/pub/libs/singularity/3.7.1/bin:$PATH
 export SINGULARITY_BINDPATH="/tmp:/tmp,/mmfs1,/gscratch,/opt:/opt,/:/hyak_root"
+```
+
+### Useful Aliases
+
+Add the following to `~/.bashrc` or `~/.cshrc`.
+
+#### hyakvnc
+
+Simple shortcut to hyakvnc script.
+
+bash:
+
+```
+alias hyakvnc=/gscratch/ece/hyakvnc.py
+```
+
+csh/tcsh:
+
+```
+alias hyakvnc /gscratch/ece/hyakvnc.py
+```
+
+#### sq
+
+This is essentially the same as squeue but with the time left for the job
+added at the right-end.
+
+bash:
+
+```
+alias sq 'squeue -o "%.18i %.9P %.8j %.8u %.2t %.10M %.6D %R %L"'
+```
+
+csh/tcsh:
+
+```
+alias sq 'squeue -o "%.18i %.9P %.8j %.8u %.2t %.10M %.6D %R %L"'
 ```
 
 ## Tutorials
