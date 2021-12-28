@@ -1,0 +1,197 @@
+Tutorial: Running HYAK and EDA Tools
+==========================================
+
+This tutorial will cover steps to use the EDA Tools in Hyak.
+
+## Starting VNC session
+
+Connect to Hyak login node.
+
+```
+$ ssh <NETID>@klone.hyak.uw.edu
+```
+
+## Setup hyakvnc.py alias
+
+The script **hyakvnc.py** is located in `/gscratch/ece/hyak_docs/scripts`. To use easily this script, the best option is to create an alias for this script. To create an alias, create/modify the file `.aliases.csh` in you `$HOME` directory.
+
+Add the following line in `.aliases.csh`:
+
+```tcsh
+alias hyakvnc '/gscratch/ece/hyakvnc.py'
+```
+
+Also be sure to source this file in `$HOME/.cshrc`.  Add this line in the `.cshrc` file:
+
+```tcsh
+source $HOME/.aliases.csh
+```
+
+## Setup VNC with hyakvnc.py utility
+
+Run hyakvnc.py with `-h` to see all available options.
+
+
+To create VNC session on an interactive node with 16 cores, 16G RAM, and
+allocated for 3 hours, run the following:
+
+```
+[<NETID>@klone]$ ./hyakvnc.py -c 16 --mem 16G -t 3
+```
+
+If not done already, this utility may ask the user to prepare for SSH
+intracluster access and VNC password. Both are required for this utility.
+
+If the utility succeeded, it should output additional instructions to set up
+a single port forward from the user machine to Hyak login node.
+
+Example:
+```
+...
+Successfully created port forward
+=====================
+Run the following in a new terminal window:
+        ssh -N -f -L 5900:127.0.0.1:5900 hansem7@klone.hyak.uw.edu
+then connect to VNC session at localhost:5900
+=====================
+```
+
+Run the instructed ssh port forward command in a new terminal session (on
+the user machine).
+
+Lastly, connect to VNC session at the instructed address (on user machine with VNC
+client).
+
+#### Stopping VNC session
+
+To stop VNC session and its associated job, run hyakvnc.py with `--kill-all`
+option.
+
+```
+[<NETID>@klone]$ ./hyakvnc.py --kill-all
+```
+
+### (Advanced) Manual setup
+
+Because there is a network firewall, the user needs to make 2 port forwards to
+establish VNC connection:
+
+1. a port forward between login node and interactive node,
+
+2. and a port forward between user machine and login node.
+
+The second port forward (and subsequently, the first) will require the user to
+find a port that is unused by another user/process.
+
+Running `netstat -ant | grep LISTEN | grep <PORT>` with some port number can be
+used to determine if a port is used. If netstat shows nothing for the given
+port, the user may use that port.
+
+#### Starting VNC session
+
+Connect to Hyak login node.
+
+```
+$ ssh <NETID>@klone.hyak.uw.edu
+```
+
+Obtain or build an XFCE singularity container. (Users can replace XFCE with
+another graphical environment by modifying the provided recipe.)
+
+```bash
+# inside an interactive node and not in a login node
+git clone git@bitbucket.org:psy_lab/xfce_singularity.git
+cd xfce_singularity
+
+# build xfce.sif container
+make
+```
+
+Allocate node with `salloc` and start vnc session inside the singularity
+container.
+
+```
+[<NETID>@klone]$ salloc --no-shell -p <partition> -A <account> --time 2:00:00 --mem=8G -c 16
+[<NETID>@klone]$ ssh <node_name|node_hostname|$(squeue | grep $USER | awk '{print $8}')>
+[<NETID>@<node_name>]$ singularity shell ./xfce.sif
+Singularity> vncserver -xstartup ./xstartup -baseHttpPort 5900
+...
+New '<node_hostname>:<vnc_display_number> (<NETID>)' desktop at :<vnc_display_number> on machine <node_hostname>
+...
+Singularity> exit
+[<NETID>@<node_name>]$ exit
+```
+
+Get the VNC display number and add 5900 (base VNC port) to it (e.g. if VNC
+display number is :1, then VNC port is at 5901). Now, we need to map this VNC
+port to an unused port on the login node.
+
+Find unused port starting at base VNC port 5900.
+
+```
+[<NETID>@klone]$ netstat -ant | grep LISTEN | grep 5900
+tcp        0      0 127.0.0.1:5900          0.0.0.0:*               LISTEN
+tcp6       0      0 ::1:5900                :::*                    LISTEN
+[<NETID>@klone]$ ss -l | grep 5901
+tcp   LISTEN 0      128                                                                 127.0.0.1:5901                     0.0.0.0:*
+tcp   LISTEN 0      128                                                                     [::1]:5901                        [::]:*
+mptcp LISTEN 0      128                                                                 127.0.0.1:5901                     0.0.0.0:*
+mptcp LISTEN 0      128                                                                     [::1]:5901                        [::]:*
+[<NETID>@klone]$ netstat -ant | grep LISTEN | grep 5902
+[<NETID>@klone]$ ss -l | grep 5902
+[<NETID>@klone]$
+```
+
+Since netstat/ss with port 5902 shows nothing, we can use this for the second
+port forward.
+
+```
+[<NETID>@klone]$ ssh -N -f -L 5902:127.0.0.1:<VNC display number + base port> <node_name>
+```
+
+In a new terminal window (on the user machine), create the second port forward with
+the port checked with netstat.
+
+```
+$ ssh -N -f -L 5902:127.0.0.1:5902 <NETID>@klone.hyak.uw.edu
+```
+
+Now connect to VNC session on user machine at localhost:5902.
+
+#### Stopping VNC session
+
+Kill VNC server running on interactive node.
+
+```
+[<NETID>@klone]$ ssh <node_name|node_hostname|$(squeue | grep $USER | awk '{print $8}')>
+[<NETID>@<node_name>] singularity shell xfce.sif
+Singularity> vncserver -kill :*
+Singularity> exit
+[<NETID>@<node_name>] exit
+```
+
+Cancel VNC job.
+
+```
+[<NETID>@klone]$ scancel <job_id>
+```
+
+Lastly, kill port forward between user machine and Hyak.
+
+TODO: Find command to complete this last step.
+
+## Troubleshooting
+
+### 'Can't open display: ...'
+
+This error can appear for several reasons:
+
+1. X server is not running.
+
+2. DISPLAY environment variable is not set or is set incorrectly.
+
+3. X11-forwarding is not enabled.
+
+### Port forward failure: `bind: Address already in use`
+
+This error occurs if the remote port is already used.
