@@ -11,9 +11,25 @@ Connect to Hyak login node.
 $ ssh <NETID>@klone.hyak.uw.edu
 ```
 
-## Setup hyakvnc.py alias
+## Setup tcsh as your default Unix shell (JUST ONE TIME)
 
-The script **hyakvnc.py** is located in `/gscratch/ece/hyak_docs/scripts`. To use easily this script, the best option is to create an alias for this script. To create an alias, create/modify the file `.aliases.csh` in you `$HOME` directory.
+Open the file `$HOME/.bash_profile` and add the following lines.
+
+```bash
+WHICH_TCSH=`which tcsh`
+
+if [ $WHICH_TCSH != "" ]
+then
+  echo "tcsh found - switching..."
+  exec tcsh
+fi
+```
+
+Close your current connection to hyak and open a new ssh session. It should use tcsh as a default Unix shell.
+
+## Setup hyakvnc.py alias (JUST ONE TIME)
+
+The script **hyakvnc.py** is located in `/gscratch/ece/hyak_docs/scripts`. To use easily this script, the best option is to create an alias for this script. To create an alias, create/modify the file `$HOME/.aliases.csh` in you `$HOME` directory.
 
 Add the following line in `.aliases.csh`:
 
@@ -27,17 +43,64 @@ Also be sure to source this file in `$HOME/.cshrc`.  Add this line in the `.cshr
 source $HOME/.aliases.csh
 ```
 
-## Setup VNC with hyakvnc.py utility
+Finally, source again the `.cshrc` file with  the following command
+
+```
+source $HOME/.cshrc
+```
+
+## Explore hyakvnc.py utility
 
 Run hyakvnc.py with `-h` to see all available options.
 
+```
+[<NETID>@klone]$ hyakvnc -h
+usage: hyakvnc.py [-h] [-p PARTITION] [-A ACCOUNT] [-J JOB_NAME]
+                  [--timeout TIMEOUT] [--port U2H_PORT] [-t TIME] [-c CPUS]
+                  [--mem MEM] [--status] [--kill KILL_JOB_ID] [--kill-all]
+                  [--set-passwd] [--container SING_CONTAINER] [-d] [-f] [-v]
 
-To create VNC session on an interactive node with 16 cores, 16G RAM, and
-allocated for 3 hours, run the following:
+optional arguments:
+  -h, --help            show this help message and exit
+  -p PARTITION, --partition PARTITION
+                        Slurm partition
+  -A ACCOUNT, --account ACCOUNT
+                        Slurm account
+  -J JOB_NAME           Slurm job name
+  --timeout TIMEOUT     Allocation timeout length (in seconds)
+  --port U2H_PORT       User<->Hyak Port
+  -t TIME, --time TIME  Subnode reservation time (in hours)
+  -c CPUS, --cpus CPUS  Subnode cpu count
+  --mem MEM             Subnode memory
+  --status              Print VNC jobs and other details, and then exit
+  --kill KILL_JOB_ID    Kill specified VNC session, cancel its VNC job, and
+                        exit
+  --kill-all            Kill all VNC sessions, cancel VNC jobs, and exit
+  --set-passwd          Prompts for new VNC password and exit
+  --container SING_CONTAINER
+                        XFCE+VNC Singularity Container (.sif)
+  -d, --debug           Enable debug logging
+  -f, --force           Skip node check and create a new VNC session
+  -v, --version         Print program version and exit
+```
+
+### Request interactive node and create VNC session
+
+To create VNC session on an interactive node with the default parameters of the script run:
 
 ```
-[<NETID>@klone]$ ./hyakvnc.py -c 16 --mem 16G -t 3
+[<NETID>@klone]$ hyakvnc
 ```
+
+The default parameters are:
+
+| Parameter | Default |
+| :-------: | :--:    |
+| CPU       | 8       |
+| MEM(RAM)  | 16      |
+| TIME      | 4 Hours |
+| Container | Centos7 |
+| Account   | ece     |
 
 If not done already, this utility may ask the user to prepare for SSH
 intracluster access and VNC password. Both are required for this utility.
@@ -62,136 +125,19 @@ the user machine).
 Lastly, connect to VNC session at the instructed address (on user machine with VNC
 client).
 
+To modify the default parameters just add the argument to change. An example could be:
+
+```
+[<NETID>@klone]$ hyakvnc --mem 64G -t 12
+```
+
+It requests an interactive node with the default parameters but changes the Memory request to 64G and 12 Hours.
+
 #### Stopping VNC session
 
 To stop VNC session and its associated job, run hyakvnc.py with `--kill-all`
 option.
 
 ```
-[<NETID>@klone]$ ./hyakvnc.py --kill-all
+[<NETID>@klone]$ hyakvnc.py --kill-all
 ```
-
-### (Advanced) Manual setup
-
-Because there is a network firewall, the user needs to make 2 port forwards to
-establish VNC connection:
-
-1. a port forward between login node and interactive node,
-
-2. and a port forward between user machine and login node.
-
-The second port forward (and subsequently, the first) will require the user to
-find a port that is unused by another user/process.
-
-Running `netstat -ant | grep LISTEN | grep <PORT>` with some port number can be
-used to determine if a port is used. If netstat shows nothing for the given
-port, the user may use that port.
-
-#### Starting VNC session
-
-Connect to Hyak login node.
-
-```
-$ ssh <NETID>@klone.hyak.uw.edu
-```
-
-Obtain or build an XFCE singularity container. (Users can replace XFCE with
-another graphical environment by modifying the provided recipe.)
-
-```bash
-# inside an interactive node and not in a login node
-git clone git@bitbucket.org:psy_lab/xfce_singularity.git
-cd xfce_singularity
-
-# build xfce.sif container
-make
-```
-
-Allocate node with `salloc` and start vnc session inside the singularity
-container.
-
-```
-[<NETID>@klone]$ salloc --no-shell -p <partition> -A <account> --time 2:00:00 --mem=8G -c 16
-[<NETID>@klone]$ ssh <node_name|node_hostname|$(squeue | grep $USER | awk '{print $8}')>
-[<NETID>@<node_name>]$ singularity shell ./xfce.sif
-Singularity> vncserver -xstartup ./xstartup -baseHttpPort 5900
-...
-New '<node_hostname>:<vnc_display_number> (<NETID>)' desktop at :<vnc_display_number> on machine <node_hostname>
-...
-Singularity> exit
-[<NETID>@<node_name>]$ exit
-```
-
-Get the VNC display number and add 5900 (base VNC port) to it (e.g. if VNC
-display number is :1, then VNC port is at 5901). Now, we need to map this VNC
-port to an unused port on the login node.
-
-Find unused port starting at base VNC port 5900.
-
-```
-[<NETID>@klone]$ netstat -ant | grep LISTEN | grep 5900
-tcp        0      0 127.0.0.1:5900          0.0.0.0:*               LISTEN
-tcp6       0      0 ::1:5900                :::*                    LISTEN
-[<NETID>@klone]$ ss -l | grep 5901
-tcp   LISTEN 0      128                                                                 127.0.0.1:5901                     0.0.0.0:*
-tcp   LISTEN 0      128                                                                     [::1]:5901                        [::]:*
-mptcp LISTEN 0      128                                                                 127.0.0.1:5901                     0.0.0.0:*
-mptcp LISTEN 0      128                                                                     [::1]:5901                        [::]:*
-[<NETID>@klone]$ netstat -ant | grep LISTEN | grep 5902
-[<NETID>@klone]$ ss -l | grep 5902
-[<NETID>@klone]$
-```
-
-Since netstat/ss with port 5902 shows nothing, we can use this for the second
-port forward.
-
-```
-[<NETID>@klone]$ ssh -N -f -L 5902:127.0.0.1:<VNC display number + base port> <node_name>
-```
-
-In a new terminal window (on the user machine), create the second port forward with
-the port checked with netstat.
-
-```
-$ ssh -N -f -L 5902:127.0.0.1:5902 <NETID>@klone.hyak.uw.edu
-```
-
-Now connect to VNC session on user machine at localhost:5902.
-
-#### Stopping VNC session
-
-Kill VNC server running on interactive node.
-
-```
-[<NETID>@klone]$ ssh <node_name|node_hostname|$(squeue | grep $USER | awk '{print $8}')>
-[<NETID>@<node_name>] singularity shell xfce.sif
-Singularity> vncserver -kill :*
-Singularity> exit
-[<NETID>@<node_name>] exit
-```
-
-Cancel VNC job.
-
-```
-[<NETID>@klone]$ scancel <job_id>
-```
-
-Lastly, kill port forward between user machine and Hyak.
-
-TODO: Find command to complete this last step.
-
-## Troubleshooting
-
-### 'Can't open display: ...'
-
-This error can appear for several reasons:
-
-1. X server is not running.
-
-2. DISPLAY environment variable is not set or is set incorrectly.
-
-3. X11-forwarding is not enabled.
-
-### Port forward failure: `bind: Address already in use`
-
-This error occurs if the remote port is already used.
