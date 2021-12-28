@@ -95,7 +95,7 @@ To create VNC session on an interactive node with the default parameters of the 
 The default parameters are:
 
 | Parameter | Default |
-| :-------: | :--:    |
+| :-------: | :------ |
 | CPU       | 8       |
 | MEM(RAM)  | 16      |
 | TIME      | 4 Hours |
