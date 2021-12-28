@@ -147,4 +147,6 @@ alias sq 'squeue -o "%.18i %.9P %.8j %.8u %.2t %.10M %.6D %R %L"'
 
 The `./tutorials/` directory provides some Hyak-related tutorials.
 
+- [Basic Tutorial (SSH and VNC)](tutorials/basic.md)
 - [GUI Tutorial (X11,VNC)](tutorials/gui.md)
+
