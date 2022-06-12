@@ -351,3 +351,16 @@ This error can appear for several reasons:
 ### Port forward failure: `bind: Address already in use`
 
 This error occurs if the remote port is already used.
+
+### `hyakvnc.py` hangs mid-way after allocation
+
+Try deleting all entries with klone in `~/.ssh/authorized_keys` and try again.
+
+### Cannot share clipboard to VNC session
+
+1. Keep `vncconfig` open in VNC session as this window allows clipboard sharing.
+    - If closed, run `vncconfig &` in the VNC session to reopen window.
+2. Use VNC client that supports clipboard sharing.
+    - macOS' VNC client does not have working clipboard sharing.
+    - Download TigerVNC binary from https://sourceforge.net/projects/tigervnc/files/stable/1.12.0/
+        - TigerVNC also supports resolution-resizing by changing window size.
