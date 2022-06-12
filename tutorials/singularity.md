@@ -12,8 +12,8 @@ This tutorial covers the following topics:
     - 2.1 [ ] Starting/stopping instance
     - 2.2 [ ] Checking instance(s)
     - 2.3 [ ] Entering instance
-3. [ ] Building containers
-    - 3.1 [ ] General guidance for writing container recipes
+3. [ ] Writing and building containers
+    - 3.1 [x] General guidance for writing container recipes
     - 3.2 [ ] Updating containers
     - 3.3 [ ] Sandbox containers
 
@@ -105,22 +105,98 @@ TODO
 singularity [shell|exec] [OPTIONS] instance://<instance_name>
 ```
 
-# 3. Building containers from scratch
+# 3. Writing and building containers from scratch
 
-TODO
+Without administrative privileges, singularity containers can be built from
+recipe files by the following command:
+
+```
+singularity build --fakeroot <output_image.sif> <recipe.def>
+```
+
+Recipe def files are plain-text files with a Header and one or more Sections
+starting with %. Header describes the base container Linux distribution (such
+as Ubuntu 18.04 or Rocky Linux 8). Sections describe additional steps on top
+of the base installation for additional functionality.
 
 ## 3.1 General guidance for writing container recipes
 
-Because Singularity does not allow any interaction during the building process,
-everything step in the recipe cannot require human-intervention. This requires
-the container developer to automate every step that a human may do.
+To avoid wasting time tweaking and re-building container images, follow these
+general guidelines:
+
+1. Get or generate a dependency list for the tools you want to run.
+    - `ldd <path_to_exec>` prints matched and unmatched dynamic library dependencies
+    - `strace <cmd>` can identify libraries failing to be found or loaded.
+2. If installing tools manually, find ways to install them entirely through the commandline.
+    - Pipe echo/printf statements to handle user-interactions in installers.
+3. Install/Use library dependencies from tool vendor if possible or closest version from distro package manager.
+    - Example: Synopsys VCS+DVE require vendor-provided GCC and scripts to be installed in a particular way.
+    - Example: Cadence Virtuso provides library dependencies for Ubuntu.
+    - Info: You can prioritize vendor-provided libraries by prepending `$LD_LIBRARY_PATH` with vendor library path.
+4. Avoid installing large tools in containers since image compression takes a significant amount of time.
 
 ### Header
+
+Header, which is written at the top of the def/recipe file, is used to describe
+the container OS and installation source/agent.
+
+```
+Bootstrap: <library|docker|scratch|localimage|...>
+From: <linux_distribution>:<version>
+```
+
 ### %setup
+
+Commands under `%setup` are executed on host OS after base container OS is
+installed but before `%post`. This stage can be used for copying and extracting
+program installers to a temporary location.
+
+```
+%setup
+    # prepare installer
+    rm -rf /tmp/installer
+    mkdir -p /tmp/installer
+    cp <package_installer.tar.gz> /tmp/installer
+    cd /tmp/installer && tar -xzf /tmp/installer/<package_installer.tar.gz>
+```
+
 ### %files
+
+Files can be copied from host to container by specifying source path and
+destination path in the container image. In singularity versions > 2.3, files
+are copied before `%post`. In older versions, files are copied after `post`.
+
+```
+%files
+    <source1_from_host> <destination1_in_container>
+    <source2_from_host> <destination2_in_container>
+```
+
 ### %post
+
+Commands executed after base container OS installation for installing tools or
+modifying container filesystem.
+
+Unhandled commands that require user-interaction will generally timeout and
+fail, so handle them accordingly by piping echo/printf statements.
+
+```
+%post
+    # avoid package manager confirmation with -y flag
+    apt-get install -y vim
+    # Respond to installer input requests
+    printf "y\ny\n" | /tmp/installer/package_installer
+```
+
 ### %environment
-### %help
+
+Commands executed to configure environment variables during runtime.
+
+```
+%environment
+    export LC_ALL=C
+    export PATH=/opt/<vendor>/<tool>/bin:$PATH
+```
 
 ## 3.2 Updating containers
 
