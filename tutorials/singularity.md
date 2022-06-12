@@ -5,9 +5,9 @@ Written and maintained by Hansem Ro (`hansemro@outlook.com`).
 
 This tutorial covers the following topics:
 
-0. [ ] Singularity Purpose
-1. [ ] Container usage (on work node)
-    - 1.1 [ ] Bind Paths
+0. [x] Singularity Purpose
+1. [x] Container usage (on work node)
+    - 1.1 [x] Bind Paths
 2. [ ] Container instances
     - 2.1 [ ] Starting/stopping instance
     - 2.2 [ ] Checking instance(s)
@@ -71,7 +71,12 @@ See more about this topic [here](https://sylabs.io/guides/3.7/user-guide/bind_pa
 When you enter a container without specifying bind paths, certain paths may
 become inaccessible (like `/gscratch` and `/mmfs1/home/<NETID>`).
 
-TODO
+To mount or bind paths on host to the container environment, specify directories
+to bind in `$SINGULARITY_BINDPATH` prior to running `singularity <exec|shell>`.
+
+```
+export SINGULARITY_BINDPATH="/tmp:/tmp,$HOME,$PWD,<source>[:<dest>]"
+```
 
 # 2. Container instances
 
